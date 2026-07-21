@@ -1,0 +1,15 @@
+{
+  "FLUX": ["flux"],
+  "WAN": ["wan2", "wan_"],
+  "ANIMA": ["anima"],
+  "PONY": ["pony"],
+  "QWEN": ["qwen"],
+  "LTX": ["ltx"],
+  "IDEOGRAM": ["ideogram"],
+  "ERNIE": ["ernie"],
+  "SDXL": ["sdxl", "xl_"],
+  "SD1.5": ["v1-5", "sd15"],
+  "KREA": ["krea"],
+  "CHROMA": ["chroma"],
+  "Z-IMAGE": ["z-image", "zimage"]
+}

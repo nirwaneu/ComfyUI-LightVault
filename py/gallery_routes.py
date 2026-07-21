@@ -9,7 +9,6 @@ from .metadata_parser import parse_png_metadata, extract_summary_from_prompt
 
 NODE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TAGS_FILE = os.path.join(NODE_DIR, "model_tags.json")
-CACHE_FILE = os.path.join(NODE_DIR, "cache.json")
 
 def load_tags_config():
     if os.path.exists(TAGS_FILE):
@@ -23,8 +22,10 @@ def load_tags_config():
 async def get_gallery_files(request):
     folder_type = request.rel_url.query.get("type", "output")
     file_filter = request.rel_url.query.get("filter", "all") # all, images, videos
+    model_filter = request.rel_url.query.get("model", "all").upper()
+    sort_by = request.rel_url.query.get("sort", "newest") # newest, oldest, name
     page = int(request.rel_url.query.get("page", 1))
-    limit = int(request.rel_url.query.get("limit", 24))
+    limit = int(request.rel_url.query.get("limit", 20))
     
     target_dir = folder_paths.get_output_directory() if folder_type == "output" else folder_paths.get_input_directory()
     
@@ -54,17 +55,34 @@ async def get_gallery_files(request):
         mtime = os.path.getmtime(fpath)
         size = os.path.getsize(fpath)
         
+        # Tag detection from filename or metadata
+        detected_tag = "OTHER"
+        fname_lower = fname.lower()
+        for tag, keywords in tags_config.items():
+            if any(kw.lower() in fname_lower for kw in keywords):
+                detected_tag = tag
+                break
+                
+        if model_filter != "ALL" and detected_tag != model_filter:
+            continue
+        
         all_files.append({
             "filename": fname,
             "type": folder_type,
             "is_video": is_vid,
             "mtime": mtime,
             "size": size,
-            "ext": ext
+            "ext": ext,
+            "tag": detected_tag
         })
         
-    # Sort Newest First
-    all_files.sort(key=lambda x: x["mtime"], reverse=True)
+    # Sorting
+    if sort_by == "newest":
+        all_files.sort(key=lambda x: x["mtime"], reverse=True)
+    elif sort_by == "oldest":
+        all_files.sort(key=lambda x: x["mtime"], reverse=False)
+    elif sort_by == "name":
+        all_files.sort(key=lambda x: x["filename"].lower())
     
     # Pagination
     total_files = len(all_files)
@@ -95,6 +113,14 @@ async def get_file_details(request):
     prompt_data, workflow_data = parse_png_metadata(fpath)
     summary = extract_summary_from_prompt(prompt_data, tags_config)
     
+    # Fallback tag detection from filename if model not found in metadata
+    if summary["detected_tag"] == "OTHER":
+        fname_lower = filename.lower()
+        for tag, keywords in tags_config.items():
+            if any(kw.lower() in fname_lower for kw in keywords):
+                summary["detected_tag"] = tag
+                break
+
     return web.json_response({
         "filename": filename,
         "has_workflow": workflow_data is not None or prompt_data is not None,

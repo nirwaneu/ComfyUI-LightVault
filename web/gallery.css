@@ -5,7 +5,7 @@
     padding: 8px;
     box-sizing: border-box;
     gap: 8px;
-    color: var(--fg-color, #fff);
+    color: #f3f4f6;
 }
 
 .sg-header {
@@ -22,34 +22,28 @@
 
 .sg-controls-row select, .sg-controls-row input {
     flex: 1;
-    background: var(--comfy-input-bg, #222);
-    color: var(--fg-color, #fff);
-    border: 1px solid var(--border-color, #444);
-    border-radius: 4px;
-    padding: 4px;
+    background: #111827;
+    color: #f3f4f6;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 5px;
     font-size: 11px;
 }
 
 .sg-btn {
-    background: var(--comfy-input-bg, #222);
-    color: var(--fg-color, #fff);
-    border: 1px solid var(--border-color, #444);
-    padding: 4px 10px;
-    border-radius: 4px;
+    background: #1f2937;
+    color: #f3f4f6;
+    border: 1px solid #374151;
+    padding: 4px 12px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
 }
 
-.sg-btn.active, .sg-btn-primary {
-    background: var(--p-button-primary-background, #2563eb);
+.sg-btn.active {
+    background: #4f46e5;
     color: white;
-    border: none;
-}
-
-.sg-btn-sm {
-    padding: 2px 6px;
-    font-size: 10px;
-    cursor: pointer;
+    border-color: #6366f1;
 }
 
 .sg-grid {
@@ -61,16 +55,18 @@
 }
 
 .sg-card {
-    background: var(--comfy-menu-bg, #1e1e1e);
-    border-radius: 6px;
+    background: #111827;
+    border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    border: 1px solid transparent;
+    border: 1px solid #1f2937;
     position: relative;
+    transition: transform 0.15s, border-color 0.15s;
 }
 
 .sg-card:hover {
-    border-color: var(--p-button-primary-background, #2563eb);
+    border-color: #6366f1;
+    transform: translateY(-2px);
 }
 
 .sg-thumb-wrapper {
@@ -86,17 +82,16 @@
     object-fit: cover;
 }
 
-/* Pills Tag Badge */
-.sg-card-pill, .sg-pill {
+.sg-card-pill {
     position: absolute;
-    top: 4px;
-    left: 4px;
-    padding: 2px 6px;
-    border-radius: 10px;
+    top: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    border-radius: 12px;
     font-size: 9px;
-    font-weight: bold;
+    font-weight: 700;
     color: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
     z-index: 2;
 }
 
@@ -104,19 +99,17 @@
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0,0,0,0.6);
     color: white;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 50%;
     font-size: 12px;
 }
 
-/* Titik Tiga Button & Menu */
 .sg-menu-btn {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    background: rgba(0,0,0,0.6);
+    top: 6px; right: 6px;
+    background: rgba(0,0,0,0.7);
     color: white;
     border: none;
     border-radius: 4px;
@@ -126,41 +119,38 @@
     z-index: 3;
 }
 
-.sg-card:hover .sg-menu-btn {
-    display: block;
-}
+.sg-card:hover .sg-menu-btn { display: block; }
 
 .sg-dropdown {
     position: absolute;
-    top: 26px;
-    right: 4px;
-    background: #222;
-    border: 1px solid #444;
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    top: 28px; right: 6px;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    box-shadow: 0 10px 15px rgba(0,0,0,0.5);
     z-index: 10;
-    width: 110px;
+    width: 120px;
+    overflow: hidden;
 }
 
 .sg-dropdown-item {
-    padding: 6px 10px;
+    padding: 8px 12px;
     font-size: 11px;
-    color: #fff;
+    color: #f3f4f6;
     cursor: pointer;
     display: block;
     text-decoration: none;
 }
 
-.sg-dropdown-item:hover {
-    background: #333;
-}
+.sg-dropdown-item:hover { background: #374151; }
 
 .sg-card-title {
     font-size: 10px;
-    padding: 4px;
+    padding: 6px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #9ca3af;
 }
 
 .sg-footer {
@@ -169,11 +159,12 @@
     align-items: center;
 }
 
-/* Modal Details Perbesar (90vw / 90vh) */
+/* Modal Details (Modern Studio UI) */
 .sg-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -183,113 +174,227 @@
 .sg-hidden { display: none !important; }
 
 .sg-modal-content {
-    background: var(--comfy-menu-bg, #1a1a1a);
+    background: #0f172a;
     width: 90vw;
-    height: 90vh;
-    border-radius: 8px;
-    padding: 16px;
+    height: 88vh;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    padding: 20px;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9);
 }
 
-/* Close Button Proper UI/UX */
 .sg-close-btn {
     position: absolute;
-    top: -12px;
-    right: -12px;
-    background: #ef4444;
-    color: white;
-    border: 2px solid #fff;
+    top: 14px;
+    right: 16px;
+    background: #334155;
+    color: #f87171;
+    border: none;
     border-radius: 50%;
     width: 32px;
     height: 32px;
     font-size: 18px;
     cursor: pointer;
     z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: background 0.2s;
 }
 
-/* Nav Buttons Overlay */
-.sg-nav-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    border: 1px solid #555;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 15;
-}
-
-.sg-nav-btn:hover { background: rgba(37, 99, 235, 0.8); }
-.sg-nav-left { left: 10px; }
-.sg-nav-right { right: 10px; }
+.sg-close-btn:hover { background: #ef4444; color: white; }
 
 .sg-modal-body {
     display: flex;
-    gap: 20px;
+    gap: 24px;
     height: 100%;
     overflow: hidden;
 }
 
+/* Preview Area + Internal Prev/Next Overlay Buttons */
 .sg-preview-box {
-    flex: 1.2;
+    flex: 1.3;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #000;
-    border-radius: 6px;
-    padding: 8px;
+    background: #020617;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.sg-preview-box img, .sg-preview-box video {
+#sg-media-render {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sg-media-render img, #sg-media-render video {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
 
+/* Internal Nav Overlay Buttons */
+.sg-nav-overlay {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(15, 23, 42, 0.7);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+.sg-nav-overlay:hover {
+    background: #4f46e5;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.sg-nav-left { left: 16px; }
+.sg-nav-right { right: 16px; }
+
+/* Details Right Box */
 .sg-details-box {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     overflow-y: auto;
-    padding-right: 6px;
+    padding-right: 8px;
 }
 
-.sg-title-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sg-title-row h3 {
-    margin: 0;
+.sg-detail-header h3 {
+    margin: 0 0 8px 0;
     font-size: 16px;
+    color: #f8fafc;
     word-break: break-all;
 }
 
-.sg-prompt-box textarea {
-    width: 100%;
-    height: 80px;
-    background: var(--comfy-input-bg, #111);
-    color: var(--fg-color, #fff);
-    border: 1px solid #333;
+.sg-tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.sg-tags-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.sg-tag-pill {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sg-remove-tag { cursor: pointer; opacity: 0.8; }
+.sg-remove-tag:hover { opacity: 1; }
+
+#sg-add-tag-input {
+    background: #1e293b;
+    border: 1px dashed #475569;
+    color: #fff;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 10px;
+    width: 90px;
+}
+
+.sg-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.sg-info-item {
+    display: flex;
+    flex-direction: column;
+    font-size: 11px;
+}
+
+.sg-info-item.full { grid-column: span 2; }
+.sg-info-item span { color: #94a3b8; font-size: 10px; }
+.sg-info-item strong { color: #f1f5f9; margin-top: 2px; word-break: break-all; }
+
+.sg-prompt-card {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sg-prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.sg-btn-copy {
+    background: #334155;
+    color: #38bdf8;
+    border: none;
+    padding: 2px 8px;
     border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.sg-prompt-card textarea {
+    width: 100%;
+    height: 70px;
+    background: #0f172a;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 11px;
     resize: none;
     box-sizing: border-box;
 }
 
-.sg-action-buttons {
+.sg-action-bar {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     margin-top: auto;
+}
+
+.sg-btn-action {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+}
+
+.sg-btn-action.primary {
+    background: #4f46e5;
+    color: white;
+}
+
+.sg-btn-action.secondary {
+    background: #334155;
+    color: #f1f5f9;
 }

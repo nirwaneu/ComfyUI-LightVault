@@ -15,4 +15,4 @@ Navigate to your ComfyUI `custom_nodes` directory and clone this repository:
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone [https://github.com/nirwaneu/ComfyUI-LightVault.git](https://github.com/nirwaneu/ComfyUI-LightVault.git)
+git clone https://github.com/nirwaneu/ComfyUI-LightVault.git

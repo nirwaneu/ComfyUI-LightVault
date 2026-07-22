@@ -13,21 +13,19 @@ app.registerExtension({
         let currentFilter = "all";
         let currentModel = "all";
         let currentSort = "newest";
+        let isFavOnly = false;
         let thumbSize = 120;
         
+        let isSelectMode = false;
+        let selectedFiles = new Set();
         let currentFileList = [];
         let currentDetailIndex = -1;
         let activeTags = [];
 
         const getPillColor = (tag) => {
             const colors = {
-                "FLUX": "#6366f1",
-                "WAN": "#06b6d4",
-                "KREA": "#f59e0b",
-                "ANIMA": "#ec4899",
-                "PONY": "#10b981",
-                "SDXL": "#3b82f6",
-                "OTHER": "#64748b"
+                "FLUX": "#6366f1", "WAN": "#06b6d4", "KREA": "#f59e0b",
+                "ANIMA": "#ec4899", "PONY": "#10b981", "SDXL": "#3b82f6", "OTHER": "#64748b"
             };
             return colors[tag.toUpperCase()] || "#3b82f6";
         };
@@ -45,6 +43,8 @@ app.registerExtension({
                             <div class="sg-tabs">
                                 <button id="sg-tab-out" class="sg-btn active">Output</button>
                                 <button id="sg-tab-in" class="sg-btn">Input</button>
+                                <button id="sg-fav-toggle" class="sg-btn-icon" title="Toggle Favorites">☆</button>
+                                <button id="sg-select-toggle" class="sg-btn-sm" title="Batch Select">Select</button>
                                 <button id="sg-refresh" class="sg-btn-icon" title="Refresh">🔄</button>
                             </div>
                             <div class="sg-controls-row">
@@ -73,6 +73,11 @@ app.registerExtension({
                             </div>
                         </div>
 
+                        <div id="sg-batch-bar" class="sg-batch-bar sg-hidden">
+                            <span id="sg-selected-count">0 selected</span>
+                            <button id="sg-batch-delete-btn" class="sg-btn-danger-sm">Delete Selected</button>
+                        </div>
+
                         <div id="sg-grid" class="sg-grid" style="--thumb-size: ${thumbSize}px;"></div>
 
                         <div class="sg-footer">
@@ -88,18 +93,18 @@ app.registerExtension({
                             <button id="sg-close-modal" class="sg-close-btn">&times;</button>
                             
                             <div class="sg-modal-body">
-                                <!-- Preview Area with Internal Prev/Next Overlay Buttons -->
                                 <div id="sg-preview-container" class="sg-preview-box">
                                     <button id="sg-nav-left" class="sg-nav-overlay sg-nav-left">◀</button>
                                     <div id="sg-media-render"></div>
                                     <button id="sg-nav-right" class="sg-nav-overlay sg-nav-right">▶</button>
                                 </div>
 
-                                <!-- Details Area -->
                                 <div class="sg-details-box">
                                     <div class="sg-detail-header">
-                                        <h3 id="sg-detail-filename">File Details</h3>
-                                        <!-- Editable Tags Container -->
+                                        <div class="sg-title-fav-row">
+                                            <h3 id="sg-detail-filename">File Details</h3>
+                                            <button id="sg-modal-fav-btn" class="sg-fav-star">☆</button>
+                                        </div>
                                         <div class="sg-tags-wrapper">
                                             <div id="sg-tags-list" class="sg-tags-list"></div>
                                             <input type="text" id="sg-add-tag-input" placeholder="+ Add tag..." />
@@ -132,6 +137,7 @@ app.registerExtension({
                                     <div class="sg-action-bar">
                                         <button id="sg-load-workflow" class="sg-btn-action primary">🚀 Load Workflow (New Tab)</button>
                                         <a id="sg-download-btn" class="sg-btn-action secondary" download>💾 Download</a>
+                                        <button id="sg-single-delete-btn" class="sg-btn-action danger">🗑️ Delete</button>
                                     </div>
                                 </div>
                             </div>
@@ -142,10 +148,16 @@ app.registerExtension({
                 const grid = el.querySelector("#sg-grid");
                 const pageInfo = el.querySelector("#sg-page-info");
                 const modal = el.querySelector("#sg-modal");
+                const batchBar = el.querySelector("#sg-batch-bar");
+                const selectedCountLabel = el.querySelector("#sg-selected-count");
+
+                const updateBatchBar = () => {
+                    selectedCountLabel.textContent = `${selectedFiles.size} selected`;
+                };
 
                 const loadFiles = async () => {
                     grid.innerHTML = "<div class='sg-loading'>Loading...</div>";
-                    const res = await fetch(`/smart_gallery/files?type=${currentType}&filter=${currentFilter}&model=${currentModel}&sort=${currentSort}&page=${currentPage}&limit=20`);
+                    const res = await fetch(`/smart_gallery/files?type=${currentType}&filter=${currentFilter}&model=${currentModel}&favorites=${isFavOnly}&sort=${currentSort}&page=${currentPage}&limit=20`);
                     const data = await res.json();
                     
                     grid.innerHTML = "";
@@ -156,11 +168,14 @@ app.registerExtension({
                         const card = document.createElement("div");
                         card.className = "sg-card";
                         
-                        const fileUrl = `/view?filename=${encodeURIComponent(file.filename)}&type=${file.type}`;
+                        const fileUrl = `/view?filename=${encodeURIComponent(file.rel_path)}&type=${file.type}`;
                         const mainTag = file.tags[0] || "OTHER";
+                        const isChecked = selectedFiles.has(file.rel_path);
 
                         card.innerHTML = `
                             <div class="sg-thumb-wrapper">
+                                ${isSelectMode ? `<input type="checkbox" class="sg-select-check" ${isChecked ? "checked" : ""} />` : ""}
+                                <button class="sg-card-fav ${file.is_fav ? 'active' : ''}">${file.is_fav ? '★' : '☆'}</button>
                                 <span class="sg-card-pill" style="background:${getPillColor(mainTag)}">${mainTag}</span>
                                 ${file.is_video ? 
                                     `<video src="${fileUrl}#t=0.1" preload="metadata" muted></video><div class="sg-play-icon">▶</div>` : 
@@ -171,6 +186,7 @@ app.registerExtension({
                                     <div class="sg-dropdown-item sg-action-open">Open / Details</div>
                                     <div class="sg-dropdown-item sg-action-copy">Copy Path</div>
                                     <a class="sg-dropdown-item" href="${fileUrl}" download="${file.filename}">Download</a>
+                                    <div class="sg-dropdown-item sg-action-delete danger-text">Delete File</div>
                                 </div>
                             </div>
                             <div class="sg-card-title">${file.filename}</div>
@@ -182,11 +198,38 @@ app.registerExtension({
                             card.addEventListener("mouseleave", () => { video.pause(); video.currentTime = 0; });
                         }
 
+                        // Favorite Star Toggle Click
+                        const favBtn = card.querySelector(".sg-card-fav");
+                        favBtn.onclick = async (e) => {
+                            e.stopPropagation();
+                            const r = await fetch("/smart_gallery/toggle_fav", {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ filename: file.rel_path })
+                            });
+                            const favRes = await r.json();
+                            file.is_fav = favRes.is_fav;
+                            favBtn.textContent = favRes.is_fav ? '★' : '☆';
+                            favBtn.classList.toggle("active", favRes.is_fav);
+                        };
+
+                        // Checkbox Select Handler
+                        if (isSelectMode) {
+                            const check = card.querySelector(".sg-select-check");
+                            check.onclick = (e) => {
+                                e.stopPropagation();
+                                if (check.checked) selectedFiles.add(file.rel_path);
+                                else selectedFiles.delete(file.rel_path);
+                                updateBatchBar();
+                            };
+                        }
+
+                        // Open Details Event
                         card.querySelector(".sg-thumb-wrapper").addEventListener("click", (e) => {
-                            if (e.target.classList.contains("sg-menu-btn") || e.target.closest(".sg-dropdown")) return;
+                            if (e.target.classList.contains("sg-menu-btn") || e.target.classList.contains("sg-card-fav") || e.target.classList.contains("sg-select-check") || e.target.closest(".sg-dropdown")) return;
                             openDetails(index);
                         });
 
+                        // Menu Titik Tiga Handlers
                         const menuBtn = card.querySelector(".sg-menu-btn");
                         const dropdown = card.querySelector(".sg-dropdown");
 
@@ -196,22 +239,59 @@ app.registerExtension({
                             dropdown.classList.toggle("sg-hidden");
                         };
 
-                        card.querySelector(".sg-action-open").onclick = (e) => {
-                            e.stopPropagation(); dropdown.classList.add("sg-hidden"); openDetails(index);
-                        };
-
-                        card.querySelector(".sg-action-copy").onclick = (e) => {
+                        card.querySelector(".sg-action-open").onclick = (e) => { e.stopPropagation(); dropdown.classList.add("sg-hidden"); openDetails(index); };
+                        card.querySelector(".sg-action-copy").onclick = (e) => { e.stopPropagation(); dropdown.classList.add("sg-hidden"); navigator.clipboard.writeText(file.rel_path); };
+                        
+                        card.querySelector(".sg-action-delete").onclick = async (e) => {
                             e.stopPropagation(); dropdown.classList.add("sg-hidden");
-                            navigator.clipboard.writeText(file.filename);
+                            if (confirm(`Are you sure you want to delete ${file.filename}?`)) {
+                                await fetch("/smart_gallery/delete_files", {
+                                    method: "POST", headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ filenames: [file.rel_path], type: currentType })
+                                });
+                                loadFiles();
+                            }
                         };
 
                         grid.appendChild(card);
                     });
                 };
 
-                // Filter & Pagination Handlers
+                // Header Controls Handlers
                 el.querySelector("#sg-tab-out").onclick = (e) => { el.querySelector("#sg-tab-in").classList.remove("active"); e.target.classList.add("active"); currentType = "output"; currentPage = 1; loadFiles(); };
                 el.querySelector("#sg-tab-in").onclick = (e) => { el.querySelector("#sg-tab-out").classList.remove("active"); e.target.classList.add("active"); currentType = "input"; currentPage = 1; loadFiles(); };
+                
+                const favToggleBtn = el.querySelector("#sg-fav-toggle");
+                favToggleBtn.onclick = () => {
+                    isFavOnly = !isFavOnly;
+                    favToggleBtn.textContent = isFavOnly ? '★' : '☆';
+                    favToggleBtn.classList.toggle("active-star", isFavOnly);
+                    currentPage = 1; loadFiles();
+                };
+
+                const selectToggleBtn = el.querySelector("#sg-select-toggle");
+                selectToggleBtn.onclick = () => {
+                    isSelectMode = !isSelectMode;
+                    selectToggleBtn.classList.toggle("active", isSelectMode);
+                    batchBar.classList.toggle("sg-hidden", !isSelectMode);
+                    if (!isSelectMode) selectedFiles.clear();
+                    updateBatchBar();
+                    loadFiles();
+                };
+
+                el.querySelector("#sg-batch-delete-btn").onclick = async () => {
+                    if (selectedFiles.size === 0) return;
+                    if (confirm(`Delete ${selectedFiles.size} selected file(s)?`)) {
+                        await fetch("/smart_gallery/delete_files", {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ filenames: Array.from(selectedFiles), type: currentType })
+                        });
+                        selectedFiles.clear();
+                        updateBatchBar();
+                        loadFiles();
+                    }
+                };
+
                 el.querySelector("#sg-refresh").onclick = () => loadFiles();
                 el.querySelector("#sg-filter-type").onchange = (e) => { currentFilter = e.target.value; currentPage = 1; loadFiles(); };
                 el.querySelector("#sg-filter-model").onchange = (e) => { currentModel = e.target.value; currentPage = 1; loadFiles(); };
@@ -220,56 +300,17 @@ app.registerExtension({
                 el.querySelector("#sg-prev-page").onclick = () => { if (currentPage > 1) { currentPage--; loadFiles(); } };
                 el.querySelector("#sg-next-page").onclick = () => { currentPage++; loadFiles(); };
 
-                // Details Modal Handlers
+                // Modal Handlers
                 el.querySelector("#sg-close-modal").onclick = () => modal.classList.add("sg-hidden");
                 el.querySelector("#sg-nav-left").onclick = () => { if (currentDetailIndex > 0) openDetails(currentDetailIndex - 1); };
                 el.querySelector("#sg-nav-right").onclick = () => { if (currentDetailIndex < currentFileList.length - 1) openDetails(currentDetailIndex + 1); };
 
-                // Tag Rendering & Saving
-                const renderTags = (filename) => {
-                    const container = el.querySelector("#sg-tags-list");
-                    container.innerHTML = "";
-                    activeTags.forEach((tag, idx) => {
-                        const pill = document.createElement("span");
-                        pill.className = "sg-tag-pill";
-                        pill.style.background = getPillColor(tag);
-                        pill.innerHTML = `${tag} <span class="sg-remove-tag">&times;</span>`;
-                        pill.querySelector(".sg-remove-tag").onclick = async () => {
-                            activeTags.splice(idx, 1);
-                            await saveTagsToBackend(filename);
-                            renderTags(filename);
-                        };
-                        container.appendChild(pill);
-                    });
-                };
-
-                const saveTagsToBackend = async (filename) => {
-                    await fetch("/smart_gallery/save_tags", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ filename, tags: activeTags })
-                    });
-                };
-
-                el.querySelector("#sg-add-tag-input").onkeydown = async (e) => {
-                    if (e.key === "Enter" && e.target.value.trim()) {
-                        const newTag = e.target.value.trim().toUpperCase();
-                        if (!activeTags.includes(newTag)) {
-                            activeTags.push(newTag);
-                            const file = currentFileList[currentDetailIndex];
-                            await saveTagsToBackend(file.filename);
-                            renderTags(file.filename);
-                        }
-                        e.target.value = "";
-                    }
-                };
-
                 const openDetails = async (index) => {
                     currentDetailIndex = index;
                     const file = currentFileList[index];
-                    const url = `/view?filename=${encodeURIComponent(file.filename)}&type=${file.type}`;
+                    const url = `/view?filename=${encodeURIComponent(file.rel_path)}&type=${file.type}`;
 
-                    const res = await fetch(`/smart_gallery/details?filename=${encodeURIComponent(file.filename)}&type=${file.type}`);
+                    const res = await fetch(`/smart_gallery/details?filename=${encodeURIComponent(file.rel_path)}&type=${file.type}`);
                     const data = await res.json();
 
                     const renderArea = el.querySelector("#sg-media-render");
@@ -279,9 +320,18 @@ app.registerExtension({
                         renderArea.innerHTML = `<img src="${url}" />`;
                     }
 
-                    // Setup Tags
-                    activeTags = data.tags || [];
-                    renderTags(file.filename);
+                    // Modal Fav Star Button
+                    const modalFavBtn = el.querySelector("#sg-modal-fav-btn");
+                    modalFavBtn.textContent = data.is_fav ? '★' : '☆';
+                    modalFavBtn.onclick = async () => {
+                        const r = await fetch("/smart_gallery/toggle_fav", {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ filename: file.rel_path })
+                        });
+                        const favRes = await r.json();
+                        modalFavBtn.textContent = favRes.is_fav ? '★' : '☆';
+                        file.is_fav = favRes.is_fav;
+                    };
 
                     el.querySelector("#sg-detail-filename").textContent = file.filename;
                     el.querySelector("#sg-detail-date").textContent = data.mtime;
@@ -298,8 +348,18 @@ app.registerExtension({
                     el.querySelector("#sg-copy-neg").onclick = () => navigator.clipboard.writeText(negText.value);
 
                     const dlBtn = el.querySelector("#sg-download-btn");
-                    dlBtn.href = url;
-                    dlBtn.download = file.filename;
+                    dlBtn.href = url; dlBtn.download = file.filename;
+
+                    el.querySelector("#sg-single-delete-btn").onclick = async () => {
+                        if (confirm(`Delete ${file.filename}?`)) {
+                            await fetch("/smart_gallery/delete_files", {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ filenames: [file.rel_path], type: currentType })
+                            });
+                            modal.classList.add("sg-hidden");
+                            loadFiles();
+                        }
+                    };
 
                     const loadBtn = el.querySelector("#sg-load-workflow");
                     if (data.has_workflow) {
